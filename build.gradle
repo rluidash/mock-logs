@@ -3,16 +3,44 @@ plugins {
     id 'application'
 }
 
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
 }
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.example.MockLogGenerator'
+        )
+    }
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    into "$buildDir/libs"
+}
+
+build.dependsOn copyDependencies
 
 application {
     mainClassName = 'com.example.MockLogGenerator'
+}
+
+run {
+    // Ensure the directory exists
+    doFirst {
+        file('app/logs').mkdirs()
+    }
+    args = []
+    // Set the JVM system properties for log4j configuration
+    jvmArgs = ["-Dlog4j.configurationFile=log4j2.xml"]
 }
 
