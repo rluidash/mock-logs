@@ -35,12 +35,20 @@ application {
 }
 
 run {
-    // Ensure the directory exists
-    doFirst {
-        file('app/logs').mkdirs()
-    }
     args = []
     // Set the JVM system properties for log4j configuration
     jvmArgs = ["-Dlog4j.configurationFile=log4j2.xml"]
 }
 
+// Declare explicit dependencies for tasks using the output of copyDependencies
+tasks.distZip {
+    dependsOn copyDependencies
+}
+
+tasks.distTar {
+    dependsOn copyDependencies
+}
+
+tasks.startScripts {
+    dependsOn copyDependencies
+}

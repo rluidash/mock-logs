@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class MockLogGenerator {
@@ -17,12 +16,12 @@ public class MockLogGenerator {
 
     public static void main(String[] args) {
         String[] messages = {
-                "User %s logged in",
-                "User %s logged out",
-                "User %s updated profile",
-                "User %s deleted account",
-                "User %s added an item to cart",
-                "User %s completed purchase"
+                "User logged in",
+                "User logged out",
+                "User updated profile",
+                "User deleted account",
+                "User added an item to cart",
+                "User completed purchase"
         };
 
         while (true) {
@@ -56,7 +55,7 @@ public class MockLogGenerator {
 
     private static void logInfo(String[] messages) {
         int index = random.nextInt(messages.length);
-        String message = String.format(messages[index], generateRandomUserId());
+        String message = messages[index];
         logger.info(message);
     }
 
@@ -64,22 +63,20 @@ public class MockLogGenerator {
         String[] warnings = {
                 "Disk space running low",
                 "High memory usage detected",
-                "User session nearing timeout for %s"
+                "User session nearing timeout"
         };
         int index = random.nextInt(warnings.length);
-        String message = String.format(warnings[index], generateRandomUserId());
-        logger.warn(message);
+        logger.warn(warnings[index]);
     }
 
     private static void logError() {
         String[] errors = {
-                "Failed to load user profile for %s",
-                "Error processing payment for %s",
-                "Database connection lost for %s"
+                "Failed to load user profile",
+                "Error processing payment",
+                "Database connection lost"
         };
         int index = random.nextInt(errors.length);
-        String message = String.format(errors[index], generateRandomUserId());
-        logger.error(message);
+        logger.error(errors[index]);
     }
 
     private static void logException() {
@@ -112,9 +109,4 @@ public class MockLogGenerator {
             }
         }
     }
-
-    private static String generateRandomUserId() {
-        return UUID.randomUUID().toString().replace("-", "_");
-    }
 }
-

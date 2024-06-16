@@ -1,0 +1,16 @@
+# Mac
+.DS_Store
+
+# logs
+logs/
+
+# Gradle
+build/
+.gradle/
+
+# Python venv
+venv
+.venv
+
+# Jupyiter notebook
+*.ipynb
