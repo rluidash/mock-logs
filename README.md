@@ -1,8 +1,6 @@
 This MockLogGenerator java app is to generate mock Java logs for testing Elasticsearch. These logs can then be ingested into Elasticsearch using tools like Logstash or Filebeat. Here's a step-by-step guide:
 
-Step 1: Create a Simple Java Logging Application
-Set Up Your Project Structure:
-Create a new directory for your project and set up the following structure:
+The MockLogGenerator.java directory structure is shown as following:
 
 ```
 mock-logs/
@@ -15,159 +13,53 @@ mock-logs/
 └── build.gradle
 ```
 
-Create the Java Class:
-Inside MockLogGenerator.java, write the following code:
-
-```
-package com.example;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-public class MockLogGenerator {
-
-    private static final Logger logger = LogManager.getLogger(MockLogGenerator.class);
-
-    public static void main(String[] args) {
-        Random random = new Random();
-        String[] messages = {"User logged in", "User logged out", "User updated profile", "User deleted account"};
-
-        while (true) {
-            try {
-                int index = random.nextInt(messages.length);
-                String message = messages[index];
-                logger.info(message);
-                TimeUnit.SECONDS.sleep(1); // Generate a log every second
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
-}
-```
-
-Configure Gradle:
-Create a build.gradle file to manage dependencies and build your project:
-
-```
-plugins {
-    id 'java'
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
-}
-
-application {
-    mainClassName = 'com.example.MockLogGenerator'
-}
-```
-
-Build and Run Your Project:
-Navigate to the project directory and run the following commands to build and execute your application:
+Build and run the MockLogGenerator app locally:
 
 ```
 gradle build
 gradle run
 ```
+The created mock logs are located in logs/app.log file. These logs contain different severity levels and messages.
 
-This will start generating logs to the console. To direct these logs to a file, configure Log4j with a log4j2.xml configuration file.
 
-Step 2: Configure Log4j to Write to a File
-Create log4j2.xml:
-Create a src/main/resources/log4j2.xml file with the following content:
+Running ElasticSearch locally and ingest the logs from MockLogGenerator app. Use the docker-compose.yml file and it will create Elasticsearch, Kiabana, Logstash and MockLogGenerator containers.
 
 ```
-<?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
-    <Appenders>
-        <File name="FileAppender" fileName="logs/app.log" append="true">
-            <PatternLayout pattern="%d{ISO8601} [%t] %-5p %c - %m%n"/>
-        </File>
-    </Appenders>
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="FileAppender"/>
-        </Root>
-    </Loggers>
-</Configuration>
+docker-compose up --build
 ```
 
-Rebuild and Run Your Project:
-Rebuild and run your project to start generating logs in the logs/app.log file.
+Verify all containers are created and running
+```
+docker ps -a
+
+CONTAINER ID   IMAGE                                                  COMMAND                  CREATED       STATUS       PORTS                              NAMES
+0ccd7e19fa91   mock-logs-logstash                                     "/usr/local/bin/dock…"   3 hours ago   Up 3 hours   5044/tcp, 9600/tcp                 logstash
+59097305df5e   docker.elastic.co/kibana/kibana:7.17.0                 "/bin/tini -- /usr/l…"   3 hours ago   Up 3 hours   0.0.0.0:5601->5601/tcp             kibana
+c12dc4719083   docker.elastic.co/elasticsearch/elasticsearch:7.17.0   "/bin/tini -- /usr/l…"   3 hours ago   Up 3 hours   0.0.0.0:9200->9200/tcp, 9300/tcp   elasticsearch
+ca8d8420d35a   mock-logs-loggenerator                                 "java -cp build/libs…"   3 hours ago   Up 3 hours                                      loggenerator
 
 ```
-gradle build
-gradle run
+
+Access Kibana and setup the index pattern for mock-logs-* index.
+
+Navigate to the Kibana UI:
+Open Kibana in your web browser: http://localhost:5601.
+
+Create an Index Pattern:
+ - Go to Management -> Stack Management -> Kibana -> Index Patterns.
+ - Click on Create index pattern.
+ - Enter the index pattern name. Since the Logstash configuration specifies the index pattern as mock-logs-*, enter mock-logs-* in the index pattern field.
+ - Click Next step.
+Select a Time Field:
+ - Select the time field that matches your logs' timestamp (e.g., @timestamp depends on your Logstash configuration).
+ - Click Create index pattern.
+
+View Logs in Kibana:
+ - Go to Discover in left-hand menu
+ - Select the newly created index pattern `mock-logs-*`
+
+Verify Elasticsearch using curl command:
 ```
-
-Step 3: Ingest Logs into Elasticsearch
-Using Logstash:
-Create a Logstash configuration file logstash.conf to ingest logs:
-
+curl -X GET "localhost:9200/mock-logs-*/_search?pretty"
 ```
-input {
-    file {
-        path => "/path/to/your/logs/app.log"
-        start_position => "beginning"
-        sincedb_path => "/dev/null"
-    }
-}
-
-filter {
-    grok {
-        match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} \[%{DATA:thread}\] %{LOGLEVEL:level} %{DATA:class} - %{GREEDYDATA:message}" }
-    }
-}
-
-output {
-    elasticsearch {
-        hosts => ["localhost:9200"]
-        index => "mock-logs"
-    }
-    stdout { codec => rubydebug }
-}
-```
-
-Run Logstash with the configuration file:
-
-```
-logstash -f logstash.conf
-```
-
-Using Filebeat:
-Configure Filebeat to ship logs to Elasticsearch:
-
-```
-filebeat.inputs:
-- type: log
-  enabled: true
-  paths:
-    - /path/to/your/logs/app.log
-
-output.elasticsearch:
-  hosts: ["localhost:9200"]
-  index: "mock-logs"
-```
-
-Start Filebeat:
-
-```
-filebeat -e
-```
-
-Step 4: Verify Data in Elasticsearch
-Use Kibana or Elasticsearch's _search API to verify that the logs are ingested correctly:
-
-```
-curl -X GET "localhost:9200/mock-logs/_search?pretty"
-By following these steps, you can generate mock Java logs and ingest them into Elasticsearch for testing and analysis.
+curl -X GET "localhost:9200/mock-logs-*/_search?pretty"
