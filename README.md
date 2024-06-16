@@ -48,10 +48,10 @@ Open Kibana in your web browser: http://localhost:5601.
 Create an Index Pattern:
  - Go to Management -> Stack Management -> Kibana -> Index Patterns.
  - Click on Create index pattern.
- - Enter the index pattern name. Since the Logstash configuration specifies the index pattern as mock-logs-*, enter mock-logs-* in the index pattern field.
+ - Enter the index pattern name. Since the Logstash configuration specifies the index pattern as `mock-logs-*`, enter `mock-logs-*` in the index pattern field.
  - Click Next step.
 Select a Time Field:
- - Select the time field that matches your logs' timestamp (e.g., @timestamp depends on your Logstash configuration).
+ - Select the time field that matches your logs' timestamp (e.g., `@timestamp` depends on your Logstash configuration).
  - Click Create index pattern.
 
 View Logs in Kibana:
@@ -62,4 +62,4 @@ Verify Elasticsearch using curl command:
 ```
 curl -X GET "localhost:9200/mock-logs-*/_search?pretty"
 ```
-curl -X GET "localhost:9200/mock-logs-*/_search?pretty"
+
